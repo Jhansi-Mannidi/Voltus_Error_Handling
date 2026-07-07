@@ -12,7 +12,7 @@ import {
   Filter, Search, Download, Copy, Eye, LayoutList, Grid3x3,
   RotateCcw, Sparkles, Plus, X, Check, Columns3, ChevronDown,
   Fingerprint, Building2, ArrowUpDown, ArrowUp, ArrowDown,
-  Zap, EllipsisVertical
+  Zap
 } from 'lucide-react'
 import {
   errors as ALL_ERRORS,
@@ -26,6 +26,7 @@ import { getRaisedErrors } from '@/lib/error-store'
 import { usePagination } from '@/lib/use-pagination'
 import { Pagination } from '@/components/voltus/pagination'
 import { MotionList, MotionItem } from '@/components/voltus/motion'
+import { AnimatePresence } from 'framer-motion'
 
 // ─── constants ──────────────────────────────────────────────────────────────
 
@@ -358,7 +359,7 @@ function ErrorsPageContent() {
       <div className="rounded-[14px] border border-[#E9EDF3] dark:border-[#334155] bg-white dark:bg-[#1E293B] overflow-hidden min-w-0 max-w-full flex flex-col min-h-0 flex-1">
 
         {/* ── header bar ──────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-[#E9EDF3] dark:border-[#334155]">
+        <div className="flex items-center justify-between gap-2 px-5 py-3.5 border-b border-[#E9EDF3] dark:border-[#334155]">
           <div className="flex items-center gap-1 min-w-0">
             <h1 className="text-[15px] font-semibold text-[#1E293B] dark:text-white mr-2 truncate">Errors</h1>
             {hasFilters && (
@@ -421,7 +422,7 @@ function ErrorsPageContent() {
         </div>
 
         {/* ── toolbar ─────────────────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-b border-[#E9EDF3] dark:border-[#334155] bg-[#FAFBFF] dark:bg-[#0F172A]/40">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 border-b border-[#E9EDF3] dark:border-[#334155] bg-[#FAFBFF] dark:bg-[#0F172A]/40">
           {/* Left: search + filter */}
           <div className="flex items-center gap-2 flex-wrap">
             {/* Search */}
@@ -551,7 +552,7 @@ function ErrorsPageContent() {
 
         {/* ── filter panel ────────────────────────────────────────────────── */}
         {filterOpen && (
-          <div className="border-b border-[#E9EDF3] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#0F172A]/60 px-4 py-3">
+          <div className="border-b border-[#E9EDF3] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#0F172A]/60 px-5 py-3.5">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {/* Class */}
               <div>
@@ -686,7 +687,7 @@ function ErrorsPageContent() {
 
         {/* ── bulk action bar ──────────────────────────────────────────────── */}
         {bulkMode && bulkSelected.size > 0 && (
-          <div className="flex items-center gap-3 px-4 py-2 bg-[#EAF1FE] dark:bg-[#1E3A5F] border-b border-[#2F6BFF]/20">
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-[#EAF1FE] dark:bg-[#1E3A5F] border-b border-[#2F6BFF]/20">
             <span className="text-[12px] font-semibold text-[#2F6BFF]">{bulkSelected.size} selected</span>
             <div className="flex items-center gap-1.5">
               <button className="flex items-center gap-1 rounded-[7px] bg-white dark:bg-[#1E293B] border border-[#E9EDF3] dark:border-[#334155] px-2.5 h-7 text-[12px] text-[#64748B] hover:bg-[#F1F5F9] transition-colors">
@@ -707,7 +708,7 @@ function ErrorsPageContent() {
 
         {/* ── table ───────────────────────────────────────────────────────── */}
         {view === 'table' ? (
-          <div className="flex-1 overflow-y-auto min-h-0 max-h-[calc(100dvh-18rem)]">
+          <div className="flex-1 overflow-y-auto min-h-0 max-h-[calc(100dvh-18rem)] px-3 py-2">
             <table className="w-full table-fixed text-[12px]">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-[#F8FAFC] dark:bg-[#0F172A]">
@@ -722,28 +723,28 @@ function ErrorsPageContent() {
                       />
                     </th>
                   )}
-                  {col('sno') && <th className="w-[36px] px-2 py-2.5 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">
+                  {col('sno') && <th className="w-[36px] pl-4 pr-3 py-3 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">
                     <div className="flex items-center">S.NO.<SortBtn col="sno" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} /></div>
                   </th>}
-                  {col('errorCode') && <th className="w-[100px] px-2 py-2.5 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">
+                  {col('errorCode') && <th className="w-[100px] px-3 py-3 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">
                     <div className="flex items-center truncate">Error Code<SortBtn col="errorCode" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} /></div>
                   </th>}
-                  {col('errorClass') && <th className="w-[84px] px-2 py-2.5 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Class</th>}
-                  {col('severity') && <th className="w-[60px] px-2 py-2.5 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">
+                  {col('errorClass') && <th className="w-[84px] px-3 py-3 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Class</th>}
+                  {col('severity') && <th className="w-[60px] px-3 py-3 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">
                     <div className="flex items-center">Severity<SortBtn col="severity" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} /></div>
                   </th>}
-                  {col('message') && <th className="min-w-0 px-2 py-2.5 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Message</th>}
-                  {col('source') && <th className="w-[84px] px-2 py-2.5 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Source</th>}
-                  {col('tenant') && <th className="w-[72px] px-2 py-2.5 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Tenant</th>}
-                  {col('correlation') && <th className="w-[60px] px-2 py-2.5 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Correlation</th>}
-                  {col('retryable') && <th className="w-[44px] px-2 py-2.5 text-center text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Retry</th>}
-                  {col('status') && <th className="w-[76px] px-2 py-2.5 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">
+                  {col('message') && <th className="w-[260px] max-w-[260px] min-w-0 px-3 py-3 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Message</th>}
+                  {col('source') && <th className="w-[96px] px-3 py-3 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Source</th>}
+                  {col('tenant') && <th className="w-[88px] px-3 py-3 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Tenant</th>}
+                  {col('correlation') && <th className="w-[60px] px-3 py-3 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Correlation</th>}
+                  {col('retryable') && <th className="w-[44px] px-3 py-3 text-center text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">Retry</th>}
+                  {col('status') && <th className="w-[76px] px-3 py-3 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">
                     <div className="flex items-center">Status<SortBtn col="status" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} /></div>
                   </th>}
-                  {col('occurred') && <th className="w-[60px] px-2 py-2.5 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">
+                  {col('occurred') && <th className="w-[60px] px-3 py-3 text-left text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider border-b border-[#E9EDF3] dark:border-[#334155]">
                     <div className="flex items-center">Occurred<SortBtn col="occurred" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} /></div>
                   </th>}
-                  {col('actions') && <th className="w-[36px] px-2 py-2.5 border-b border-[#E9EDF3] dark:border-[#334155]" />}
+                  {col('actions') && <th className="w-[72px] min-w-[72px] pl-3 pr-4 py-3 border-b border-[#E9EDF3] dark:border-[#334155]" />}
                 </tr>
               </thead>
               <tbody>
@@ -783,11 +784,11 @@ function ErrorsPageContent() {
                     )}
 
                     {col('sno') && (
-                      <td className="w-[36px] px-2 py-2 text-[#94A3B8] tabular-nums">{evt.sno}</td>
+                      <td className="w-[36px] pl-4 pr-3 py-2.5 text-[#94A3B8] tabular-nums">{evt.sno}</td>
                     )}
 
                     {col('errorCode') && (
-                      <td className="w-[100px] px-2 py-2 min-w-0">
+                      <td className="w-[100px] px-3 py-2.5 min-w-0">
                         <div className="flex items-center gap-1 min-w-0">
                           <span className="truncate font-mono text-[11px] font-semibold text-[#2F6BFF]" title={evt.errorCode}>{evt.errorCode}</span>
                           <button
@@ -802,27 +803,27 @@ function ErrorsPageContent() {
                     )}
 
                     {col('errorClass') && (
-                      <td className="w-[84px] px-2 py-2 overflow-hidden">
+                      <td className="w-[84px] px-3 py-2.5 overflow-hidden">
                         <ErrorClassPill value={evt.errorClass} />
                       </td>
                     )}
 
                     {col('severity') && (
-                      <td className="w-[60px] px-2 py-2 overflow-hidden">
+                      <td className="w-[60px] px-3 py-2.5 overflow-hidden">
                         <SeverityPill value={evt.severity} />
                       </td>
                     )}
 
                     {col('message') && (
-                      <td className="min-w-0 px-2 py-2">
-                        <p className="truncate text-[#334155] dark:text-slate-300 text-[12px]" title={evt.message}>
+                      <td className="w-[260px] max-w-[260px] min-w-0 px-3 py-2.5 overflow-hidden">
+                        <p className="truncate text-[#334155] dark:text-slate-300 text-[12px] leading-snug" title={evt.message}>
                           {evt.message}
                         </p>
                       </td>
                     )}
 
                     {col('source') && (
-                      <td className="w-[84px] px-2 py-2 min-w-0 overflow-hidden">
+                      <td className="w-[96px] px-3 py-2.5 min-w-0 overflow-hidden">
                         <div className="truncate text-[#1E293B] dark:text-white font-medium text-[11px]" title={`${evt.service} · ${evt.operation}`}>
                           {evt.service}
                         </div>
@@ -830,7 +831,7 @@ function ErrorsPageContent() {
                     )}
 
                     {col('tenant') && (
-                      <td className="w-[72px] px-2 py-2 min-w-0 overflow-hidden">
+                      <td className="w-[88px] px-3 py-2.5 min-w-0 overflow-hidden">
                         <div className="flex items-center gap-1 min-w-0">
                           <Building2 className="h-3 w-3 text-[#94A3B8] shrink-0" />
                           <span className="truncate text-[11px] text-[#64748B] dark:text-slate-400" title={evt.tenant}>{evt.tenant}</span>
@@ -839,7 +840,7 @@ function ErrorsPageContent() {
                     )}
 
                     {col('correlation') && (
-                      <td className="w-[60px] px-2 py-2 min-w-0 overflow-hidden">
+                      <td className="w-[60px] px-3 py-2.5 min-w-0 overflow-hidden">
                         <button
                           onClick={e => copyCorrelation(e, evt.id, evt.correlationId)}
                           title={evt.correlationId}
@@ -856,7 +857,7 @@ function ErrorsPageContent() {
                     )}
 
                     {col('retryable') && (
-                      <td className="w-[44px] px-2 py-2 text-center">
+                      <td className="w-[44px] px-3 py-2.5 text-center">
                         {evt.retryable ? (
                           <Check className="h-3.5 w-3.5 text-[#16A34A] mx-auto" />
                         ) : (
@@ -866,13 +867,13 @@ function ErrorsPageContent() {
                     )}
 
                     {col('status') && (
-                      <td className="w-[76px] px-2 py-2 overflow-hidden">
+                      <td className="w-[76px] min-w-[76px] px-3 py-2.5 overflow-hidden">
                         <LifecyclePill value={evt.status} />
                       </td>
                     )}
 
                     {col('occurred') && (
-                      <td className="w-[60px] px-2 py-2 min-w-0">
+                      <td className="w-[60px] px-3 py-2.5 min-w-0">
                         <div className="truncate text-[11px] text-[#334155] dark:text-slate-300" title={new Date(evt.occurredAt).toISOString()}>
                           {relativeTime(evt.occurredAt)}
                         </div>
@@ -880,27 +881,22 @@ function ErrorsPageContent() {
                     )}
 
                     {col('actions') && (
-                      <td className="w-[36px] px-2 py-2" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-end">
-                          <span className="flex h-6 w-6 items-center justify-center text-[#94A3B8] group-hover:hidden">
-                            <EllipsisVertical className="h-4 w-4" />
-                          </span>
-                          <div className="hidden group-hover:flex items-center gap-0.5">
-                            <button
-                              onClick={() => setSelectedEvt(evt)}
-                              title="View detail"
-                              className="flex h-6 w-6 items-center justify-center rounded text-[#64748B] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] hover:text-[#2F6BFF] transition-colors"
-                            >
-                              <Eye className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              title={evt.retryable ? 'Replay' : 'Not retryable'}
-                              disabled={!evt.retryable}
-                              className="flex h-6 w-6 items-center justify-center rounded text-[#64748B] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] hover:text-[#2F6BFF] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                              <RotateCcw className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
+                      <td className="w-[72px] min-w-[72px] pl-3 pr-4 py-2.5" onClick={e => e.stopPropagation()}>
+                        <div className="ml-auto flex h-6 w-[52px] shrink-0 items-center justify-end gap-0.5 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto">
+                          <button
+                            onClick={() => setSelectedEvt(evt)}
+                            title="View detail"
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-[#64748B] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] hover:text-[#2F6BFF] transition-colors"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            title={evt.retryable ? 'Replay' : 'Not retryable'}
+                            disabled={!evt.retryable}
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-[#64748B] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] hover:text-[#2F6BFF] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </td>
                     )}
@@ -967,9 +963,15 @@ function ErrorsPageContent() {
       </div>
 
       {/* ── detail drawer ────────────────────────────────────────────────── */}
-      {selectedEvt && (
-        <ErrorDetailDrawer event={selectedEvt} onClose={() => setSelectedEvt(null)} />
-      )}
+      <AnimatePresence>
+        {selectedEvt && (
+          <ErrorDetailDrawer
+            key={selectedEvt.id}
+            event={selectedEvt}
+            onClose={() => setSelectedEvt(null)}
+          />
+        )}
+      </AnimatePresence>
     </AppShell>
   )
 }

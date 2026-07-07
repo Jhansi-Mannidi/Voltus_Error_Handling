@@ -5,7 +5,7 @@ import { AppShell } from '@/components/shell/app-shell'
 import { SeverityPill, LifecyclePill, ErrorClassPill } from '@/components/voltus/status-pill'
 import { usePagination } from '@/lib/use-pagination'
 import { Pagination } from '@/components/voltus/pagination'
-import { MotionList, MotionItem } from '@/components/voltus/motion'
+import { MotionList, MotionItem, MotionSection, MotionKpiGrid, MotionTabPanel } from '@/components/voltus/motion'
 import {
   Building2, AlertTriangle, CheckCircle2, Inbox, ShieldCheck,
   Lock, Unlock, MapPin, Mail, ArrowUpDown, Activity,
@@ -48,7 +48,7 @@ export default function TenantsPage() {
     <AppShell>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <MotionKpiGrid className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         {[
           { label: 'Total Tenants',   value: tenants.length, icon: Building2,    accent: '#2F6BFF', bg: '#EAF1FE' },
           { label: 'Active Tenants',  value: activeTenants,  icon: CheckCircle2, accent: '#16A34A', bg: '#F0FDF4' },
@@ -66,7 +66,7 @@ export default function TenantsPage() {
             <span className="text-[28px] font-bold leading-none text-[#1E293B] dark:text-white">{k.value}</span>
           </div>
         ))}
-      </div>
+      </MotionKpiGrid>
 
       {/* Quota overview */}
       <div className="rounded-[14px] border border-[#E9EDF3] dark:border-[#334155] bg-white dark:bg-[#1E293B] p-5 mb-5">

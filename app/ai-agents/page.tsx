@@ -5,7 +5,7 @@ import { AppShell } from '@/components/shell/app-shell'
 import { SeverityPill, LifecyclePill } from '@/components/voltus/status-pill'
 import { usePagination } from '@/lib/use-pagination'
 import { Pagination } from '@/components/voltus/pagination'
-import { MotionList, MotionItem } from '@/components/voltus/motion'
+import { MotionList, MotionItem, MotionSection, MotionKpiGrid, MotionTabPanel } from '@/components/voltus/motion'
 import {
   Bot, Brain, AlertTriangle, CheckCircle2, Inbox, Zap,
   RotateCcw, ArrowDownToLine, ShieldOff, ChevronDown, ChevronRight,
@@ -55,7 +55,7 @@ export default function AIAgentsPage() {
     <AppShell>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <MotionKpiGrid className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         {[
           { label: 'Total AI Errors',   value: totalErrors,   icon: Brain,        accent: '#2F6BFF', bg: '#EAF1FE' },
           { label: 'Self-Healed',       value: healed,        icon: CheckCircle2, accent: '#16A34A', bg: '#F0FDF4' },
@@ -73,7 +73,7 @@ export default function AIAgentsPage() {
             <span className="text-[28px] font-bold leading-none text-[#1E293B] dark:text-white">{k.value}</span>
           </div>
         ))}
-      </div>
+      </MotionKpiGrid>
 
       {/* Agent health summary row */}
       <div className="mb-5">

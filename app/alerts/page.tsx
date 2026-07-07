@@ -5,7 +5,7 @@ import { AppShell } from '@/components/shell/app-shell'
 import { SeverityPill } from '@/components/voltus/status-pill'
 import { usePagination } from '@/lib/use-pagination'
 import { Pagination } from '@/components/voltus/pagination'
-import { MotionList, MotionItem } from '@/components/voltus/motion'
+import { MotionList, MotionItem, MotionSection, MotionKpiGrid, MotionTabPanel } from '@/components/voltus/motion'
 import {
   BellRing, Plus, Edit2, Trash2, Play, Pause, VolumeX,
   MessageSquare, Mail, Phone, CheckCircle2, AlertCircle,
@@ -67,7 +67,7 @@ export default function AlertsPage() {
   return (
     <AppShell>
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <MotionKpiGrid className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         {[
           { label: 'Active Rules', value: activeCount, color: '#16A34A', bg: '#F0FDF4',  icon: CheckCircle2 },
           { label: 'Paused',       value: pausedCount, color: '#D97706', bg: '#FFFBEB',  icon: Pause        },
@@ -85,7 +85,7 @@ export default function AlertsPage() {
             <span className="text-[28px] font-bold text-[#1E293B] dark:text-white leading-none">{k.value}</span>
           </div>
         ))}
-      </div>
+      </MotionKpiGrid>
 
       {/* Live firing banner */}
       {rules.some(r => r.triggeredCount > 0 && r.status === 'active') && (

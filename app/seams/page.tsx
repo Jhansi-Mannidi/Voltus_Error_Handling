@@ -9,6 +9,7 @@ import {
   ChevronDown, ChevronRight, ExternalLink, Layers, Wifi,
   Database, Server, Bot, Globe,
 } from 'lucide-react'
+import { MotionSection, MotionList, MotionItem, MotionKpiGrid } from '@/components/voltus/motion'
 import { seams, errorEvents, type SeamEntry, type SeamName } from '@/lib/data'
 
 const seamIcon: Record<SeamName, React.ElementType> = {
@@ -43,7 +44,7 @@ export default function SeamsPage() {
     <AppShell>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <MotionKpiGrid className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         {[
           { label: 'Events Today', value: totalEvents, icon: AlertTriangle, accent: '#2F6BFF', bg: '#EAF1FE' },
           { label: 'Critical Seams', value: criticalSeams, icon: Shield, accent: '#DC2626', bg: '#FEF2F2' },
@@ -61,8 +62,9 @@ export default function SeamsPage() {
             <span className="text-[28px] font-bold leading-none text-[#1E293B] dark:text-white">{k.value}</span>
           </div>
         ))}
-      </div>
+      </MotionKpiGrid>
 
+      <MotionSection delay={0.05}>
       {/* Architecture diagram strip */}
       <div className="rounded-[14px] border border-[#E9EDF3] dark:border-[#334155] bg-white dark:bg-[#1E293B] p-5 mb-5">
         <h3 className="text-[13px] font-semibold text-[#1E293B] dark:text-white mb-4">Exception Flow Architecture</h3>
@@ -217,6 +219,7 @@ export default function SeamsPage() {
           )
         })}
       </div>
+      </MotionSection>
     </AppShell>
   )
 }

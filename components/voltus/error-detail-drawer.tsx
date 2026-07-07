@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { MotionOverlay, MotionTabPanel, EASE } from '@/components/voltus/motion'
 import {
   X, Copy, CheckCircle2, Trash2, RotateCcw, GitBranch,
   Link2, Eye, EyeOff, RefreshCw, ChevronDown, ChevronRight,
@@ -12,7 +14,7 @@ import {
 import Link from 'next/link'
 import { ErrorClassPill, SeverityPill, LifecyclePill } from './status-pill'
 import { AvatarChip } from './avatar-chip'
-import { resolveBusinessDecision, type ErrorEnvelope } from '@/mock'
+import { resolveBusinessDecision, type ErrorEnvelope, type Severity } from '@/mock'
 import { logEntries } from '@/lib/data'
 
 // ─── per-envelope derived data ────────────────────────────────────────────────
@@ -128,6 +130,110 @@ function KV({ label, value, mono = false, href }: { label: string; value: string
 
 function Divider() {
   return <div className="h-px bg-[#E9EDF3] dark:bg-[#334155]" />
+}
+
+function severityAccent(severity: Severity): string {
+  if (severity === 'FATAL') return '#7F1D1D'
+  if (severity === 'ERROR') return '#DC2626'
+  if (severity === 'WARN')  return '#D97706'
+  return '#2F6BFF'
+}
+
+function severityTint(severity: Severity): { bg: string; border: string; text: string } {
+  if (severity === 'FATAL') return { bg: '#FEF2F2', border: '#FECACA', text: '#991B1B' }
+  if (severity === 'ERROR') return { bg: '#FEF2F2', border: '#FECACA', text: '#B91C1C' }
+  if (severity === 'WARN')  return { bg: '#FFFBEB', border: '#FDE68A', text: '#92400E' }
+  return { bg: '#EAF1FE', border: '#BFDBFE', text: '#1D4ED8' }
+}
+
+function SectionCard({
+  title,
+  icon: Icon,
+  children,
+  className = '',
+}: {
+  title: string
+  icon?: React.ElementType
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div className={`rounded-xl border border-[#E9EDF3] dark:border-[#334155] bg-white dark:bg-[#1E293B] overflow-hidden shadow-sm ${className}`}>
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[#E9EDF3] dark:border-[#334155] bg-[#F8FAFC]/80 dark:bg-[#0F172A]/50">
+        {Icon && <Icon className="h-3.5 w-3.5 text-[#2F6BFF] shrink-0" />}
+        <p className="text-[10px] font-bold uppercase tracking-[0.06em] text-[#64748B] dark:text-slate-400">{title}</p>
+      </div>
+      <div className="px-4 py-3.5">{children}</div>
+    </div>
+  )
+}
+
+function DrawerAction({
+  label,
+  icon: Icon,
+  onClick,
+  variant = 'neutral',
+  disabled,
+}: {
+  label: string
+  icon: React.ElementType
+  onClick?: () => void
+  variant?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral' | 'indigo'
+  disabled?: boolean
+}) {
+  const styles = {
+    primary: 'bg-[#EAF1FE] text-[#2F6BFF] hover:bg-[#2F6BFF] hover:text-white border-transparent',
+    success: 'bg-[#F0FDF4] text-[#16A34A] hover:bg-[#16A34A] hover:text-white border-transparent',
+    warning: 'bg-[#FFFBEB] text-[#D97706] hover:bg-[#D97706] hover:text-white border-transparent',
+    danger:  'bg-[#FEF2F2] text-[#DC2626] hover:bg-[#DC2626] hover:text-white border-transparent',
+    indigo:  'bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#4F46E5] hover:text-white border-transparent',
+    neutral: 'bg-white dark:bg-[#1E293B] text-[#64748B] hover:text-[#2F6BFF] border-[#E9EDF3] dark:border-[#334155] hover:border-[#2F6BFF]/30',
+  }[variant]
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 disabled:cursor-not-allowed ${styles}`}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      {label}
+    </button>
+  )
+}
+
+function CopyableKV({
+  label,
+  value,
+  mono,
+  href,
+  onCopy,
+  copied,
+  copyKey,
+}: {
+  label: string
+  value: string
+  mono?: boolean
+  href?: string
+  onCopy?: () => void
+  copied?: string | null
+  copyKey?: string
+}) {
+  return (
+    <div className="flex items-end justify-between gap-2 min-w-0 group/kv">
+      <KV label={label} value={value} mono={mono} href={href} />
+      {onCopy && (
+        <button
+          type="button"
+          onClick={onCopy}
+          className="shrink-0 mb-0.5 flex h-6 w-6 items-center justify-center rounded-md text-[#94A3B8] opacity-0 group-hover/kv:opacity-100 hover:bg-[#F1F5F9] dark:hover:bg-[#334155] hover:text-[#2F6BFF] transition-all"
+        >
+          {copied === copyKey ? <CheckCircle className="h-3 w-3 text-[#16A34A]" /> : <Copy className="h-3 w-3" />}
+        </button>
+      )}
+    </div>
+  )
 }
 
 // ─── confirm modal ────────────────────────────────────────────────────────────
@@ -273,292 +379,294 @@ export function ErrorDetailDrawer({ event, onClose, fullPage = false }: ErrorDet
 
   const wrapper = fullPage
     ? 'flex flex-col h-full'
-    : 'fixed right-0 top-0 z-50 flex h-full w-full max-w-[640px] flex-col bg-[#FFFFFF] dark:bg-[#0F172A] shadow-2xl border-l border-[#E9EDF3] dark:border-[#334155]'
+    : 'fixed right-0 top-0 z-50 flex h-full w-full max-w-[680px] flex-col bg-white dark:bg-[#0F172A] shadow-[-8px_0_40px_rgba(15,23,42,0.12)] border-l border-[#E9EDF3] dark:border-[#334155]'
+
+  const accent = severityAccent(event.severity)
+  const tint   = severityTint(event.severity)
 
   return (
     <>
       {!fullPage && (
-        <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px]" onClick={onClose} />
+        <MotionOverlay className="z-40 bg-[#0F172A]/35 backdrop-blur-[3px]" onClick={onClose} />
       )}
 
-      <div className={wrapper}>
+      <motion.div
+        className={wrapper}
+        initial={fullPage ? false : { x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ duration: 0.3, ease: EASE }}
+      >
 
         {/* ═══════════════════════════════════════════════════════ HEADER */}
-        <div className="shrink-0 border-b border-[#E9EDF3] dark:border-[#334155]">
+        <div className="shrink-0 bg-white dark:bg-[#1E293B]">
+          {/* severity accent */}
+          <div className="h-1 w-full" style={{ backgroundColor: accent }} />
 
-          {/* row 1: code pill + pills + close */}
-          <div className="flex items-start gap-3 px-5 pt-4 pb-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                <span className="font-mono text-[13px] font-bold text-[#2F6BFF]">{event.errorCode}</span>
-                <button
-                  onClick={() => copy(event.errorCode, 'code')}
-                  title="Copy error code"
-                  className="flex h-5 w-5 items-center justify-center rounded text-[#94A3B8] hover:text-[#2F6BFF] hover:bg-[#EAF1FE] transition-colors">
-                  {copied === 'code' ? <CheckCircle className="h-3 w-3 text-[#16A34A]" /> : <Copy className="h-3 w-3" />}
-                </button>
-                <ErrorClassPill value={event.errorClass} />
-                <SeverityPill   value={event.severity} />
-                <LifecyclePill  value={event.status} />
-                {event.retryable && (
-                  <span className="rounded-full bg-[#E8F0FE] text-[#2563EB] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide">
-                    Retryable
-                  </span>
-                )}
+          {/* hero */}
+          <div className="px-5 pt-4 pb-3">
+            <div className="flex items-start gap-3">
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border"
+                style={{ backgroundColor: `${accent}12`, borderColor: `${accent}30` }}
+              >
+                <AlertTriangle className="h-5 w-5" style={{ color: accent }} />
               </div>
-              <p className="text-[13px] font-semibold text-[#1E293B] dark:text-white truncate leading-snug">
-                {event.service} <span className="text-[#94A3B8] font-normal">·</span> {event.operation}
-              </p>
-              <p className="text-[11px] text-[#64748B] dark:text-slate-400 mt-0.5 line-clamp-2 leading-snug">{event.message}</p>
-            </div>
-            {!fullPage && (
-              <button onClick={onClose} aria-label="Close"
-                className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] transition-colors mt-0.5">
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          {/* row 2: action bar */}
-          <div className="flex items-center gap-1.5 px-5 pb-2.5 flex-wrap">
-            {/* Replay */}
-            {event.retryable && !isClosed && (
-              <button onClick={() => trigger('replay')}
-                className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-[#EAF1FE] text-[#2F6BFF] hover:bg-[#2F6BFF] hover:text-white transition-colors">
-                <RotateCcw className="h-3 w-3" /> Replay
-              </button>
-            )}
-            {/* Business exception — route / approve / reject (PRD §17.1 actions) */}
-            {business && !isClosed && (
-              <>
-                <button onClick={() => trigger('route')}
-                  className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#4F46E5] hover:text-white transition-colors">
-                  <Send className="h-3 w-3" /> Request approval
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+                  <span className="font-mono text-[13px] font-bold text-[#2F6BFF]">{event.errorCode}</span>
+                  <button
+                    onClick={() => copy(event.errorCode, 'code')}
+                    title="Copy error code"
+                    className="flex h-5 w-5 items-center justify-center rounded-md text-[#94A3B8] hover:text-[#2F6BFF] hover:bg-[#EAF1FE] transition-colors"
+                  >
+                    {copied === 'code' ? <CheckCircle className="h-3 w-3 text-[#16A34A]" /> : <Copy className="h-3 w-3" />}
+                  </button>
+                </div>
+                <h2 className="text-[15px] font-bold text-[#1E293B] dark:text-white leading-snug truncate">
+                  {event.service}
+                  <span className="text-[#94A3B8] font-normal mx-1.5">·</span>
+                  <span className="font-semibold text-[#334155] dark:text-slate-300">{event.operation}</span>
+                </h2>
+                <p className="text-[12px] text-[#64748B] dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{event.message}</p>
+              </div>
+              {!fullPage && (
+                <button onClick={onClose} aria-label="Close"
+                  className="shrink-0 flex h-8 w-8 items-center justify-center rounded-xl text-[#64748B] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] border border-[#E9EDF3] dark:border-[#334155] transition-colors">
+                  <X className="h-4 w-4" />
                 </button>
-                <button onClick={() => trigger('approve')}
-                  className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-[#F0FDF4] text-[#16A34A] hover:bg-[#16A34A] hover:text-white transition-colors">
-                  <UserCheck className="h-3 w-3" /> Approve
-                </button>
-                <button onClick={() => trigger('reject')}
-                  className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-[#FEF2F2] text-[#DC2626] hover:bg-[#DC2626] hover:text-white transition-colors">
-                  <XCircle className="h-3 w-3" /> Reject
-                </button>
-              </>
-            )}
-            {/* Resolve */}
-            {!isClosed && (
-              <button onClick={() => trigger('resolve')}
-                className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-[#F0FDF4] text-[#16A34A] hover:bg-[#16A34A] hover:text-white transition-colors">
-                <CheckCircle2 className="h-3 w-3" /> Resolve
-              </button>
-            )}
-            {/* DLQ or Redrive */}
-            {isDead ? (
-              <button onClick={() => trigger('redrive')}
-                className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-[#FFFBEB] text-[#D97706] hover:bg-[#D97706] hover:text-white transition-colors">
-                <RefreshCw className="h-3 w-3" /> Redrive
-              </button>
-            ) : !isClosed && (
-              <button onClick={() => trigger('dlq')}
-                className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-[#FEF2F2] text-[#DC2626] hover:bg-[#DC2626] hover:text-white transition-colors">
-                <AlertTriangle className="h-3 w-3" /> Send to DLQ
-              </button>
-            )}
-            {/* Discard */}
-            {!isClosed && (
-              <button onClick={() => trigger('discard')}
-                className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-semibold bg-[#F8FAFC] dark:bg-[#1E293B] text-[#64748B] hover:bg-[#FEF2F2] hover:text-[#DC2626] border border-[#E9EDF3] dark:border-[#334155] transition-colors">
-                <Trash2 className="h-3 w-3" /> Discard
-              </button>
-            )}
-            {/* Copy link */}
-            <button onClick={() => copy(`${typeof window !== 'undefined' ? window.location.origin : ''}/errors/${event.id}`, 'link')}
-              className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[11px] font-medium bg-[#F8FAFC] dark:bg-[#1E293B] text-[#64748B] hover:text-[#2F6BFF] border border-[#E9EDF3] dark:border-[#334155] transition-colors">
-              {copied === 'link' ? <CheckCircle className="h-3 w-3 text-[#16A34A]" /> : <Link2 className="h-3 w-3" />}
-              {copied === 'link' ? 'Copied!' : 'Copy link'}
-            </button>
-            {/* Kebab */}
-            <div className="relative ml-auto">
-              <button onClick={() => setKebabOpen(o => !o)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] border border-[#E9EDF3] dark:border-[#334155] transition-colors">
-                <MoreVertical className="h-3.5 w-3.5" />
-              </button>
-              {kebabOpen && (
-                <>
-                  <div className="fixed inset-0 z-[55]" onClick={() => setKebabOpen(false)} />
-                  <div className="absolute right-0 top-8 z-[56] w-48 rounded-xl bg-white dark:bg-[#1E293B] border border-[#E9EDF3] dark:border-[#334155] shadow-xl overflow-hidden">
-                    {([
-                      { label: 'Open full page',   icon: ExternalLink, href: `/errors/${event.id}` },
-                      { label: 'View in Registry', icon: Hash,         href: `/registry` },
-                      { label: 'View in Logs',     icon: ScrollText,   href: `/logs` },
-                      { label: 'View DLQ',         icon: FlaskConical, href: `/dlq` },
-                      { label: 'View Tenant',      icon: Building2,    href: `/tenant` },
-                    ] as const).map(item => (
-                      <Link key={item.label} href={item.href} onClick={() => setKebabOpen(false)}
-                        className="flex items-center gap-2.5 px-3.5 py-2 text-[12px] text-[#334155] dark:text-slate-300 hover:bg-[#F1F5F9] dark:hover:bg-[#334155] transition-colors">
-                        <item.icon className="h-3.5 w-3.5 text-[#94A3B8]" />
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                </>
               )}
             </div>
+
+            {/* status pills row */}
+            <div className="flex flex-wrap items-center gap-1.5 mt-3">
+              <ErrorClassPill value={event.errorClass} />
+              <SeverityPill value={event.severity} />
+              <LifecyclePill value={event.status} />
+              {event.retryable && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#E8F0FE] text-[#2563EB] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <RotateCcw className="h-2.5 w-2.5" /> Retryable
+                </span>
+              )}
+              <span className="ml-auto text-[10px] font-mono text-[#94A3B8] hidden sm:inline">
+                {fmtShort(event.occurredAt)} · {event.seam}
+              </span>
+            </div>
           </div>
 
-          {/* action-done banner */}
+          {/* action toolbar */}
+          <div className="mx-5 mb-3 flex flex-wrap items-center gap-1.5 rounded-xl border border-[#E9EDF3] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#0F172A]/60 p-1.5">
+            {event.retryable && !isClosed && (
+              <DrawerAction label="Replay" icon={RotateCcw} variant="primary" onClick={() => trigger('replay')} />
+            )}
+            {business && !isClosed && (
+              <>
+                <DrawerAction label="Request approval" icon={Send} variant="indigo" onClick={() => trigger('route')} />
+                <DrawerAction label="Approve" icon={UserCheck} variant="success" onClick={() => trigger('approve')} />
+                <DrawerAction label="Reject" icon={XCircle} variant="danger" onClick={() => trigger('reject')} />
+              </>
+            )}
+            {!isClosed && (
+              <DrawerAction label="Resolve" icon={CheckCircle2} variant="success" onClick={() => trigger('resolve')} />
+            )}
+            {isDead ? (
+              <DrawerAction label="Redrive" icon={RefreshCw} variant="warning" onClick={() => trigger('redrive')} />
+            ) : !isClosed && (
+              <DrawerAction label="Send to DLQ" icon={AlertTriangle} variant="danger" onClick={() => trigger('dlq')} />
+            )}
+            {!isClosed && (
+              <DrawerAction label="Discard" icon={Trash2} variant="neutral" onClick={() => trigger('discard')} />
+            )}
+            <DrawerAction
+              label={copied === 'link' ? 'Copied!' : 'Copy link'}
+              icon={copied === 'link' ? CheckCircle : Link2}
+              variant="neutral"
+              onClick={() => copy(`${typeof window !== 'undefined' ? window.location.origin : ''}/errors/${event.id}`, 'link')}
+            />
+            <div className="relative ml-auto">
+              <button
+                type="button"
+                onClick={() => setKebabOpen(o => !o)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-[#64748B] hover:bg-white dark:hover:bg-[#1E293B] border border-transparent hover:border-[#E9EDF3] dark:hover:border-[#334155] transition-colors"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+              <AnimatePresence>
+                {kebabOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[55]" onClick={() => setKebabOpen(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-9 z-[56] w-52 rounded-xl bg-white dark:bg-[#1E293B] border border-[#E9EDF3] dark:border-[#334155] shadow-xl overflow-hidden"
+                    >
+                      {([
+                        { label: 'Open full page',   icon: ExternalLink, href: `/errors/${event.id}` },
+                        { label: 'View in Registry', icon: Hash,         href: `/registry` },
+                        { label: 'View in Logs',     icon: ScrollText,   href: `/logs` },
+                        { label: 'View DLQ',         icon: FlaskConical, href: `/dlq` },
+                        { label: 'View Tenant',      icon: Building2,    href: `/tenant` },
+                      ] as const).map(item => (
+                        <Link key={item.label} href={item.href} onClick={() => setKebabOpen(false)}
+                          className="flex items-center gap-2.5 px-3.5 py-2.5 text-[12px] text-[#334155] dark:text-slate-300 hover:bg-[#F1F5F9] dark:hover:bg-[#334155] transition-colors">
+                          <item.icon className="h-3.5 w-3.5 text-[#94A3B8]" />
+                          {item.label}
+                        </Link>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
           {actionDone && (
-            <div className="mx-5 mb-2.5 flex items-center gap-2 rounded-lg bg-[#F0FDF4] border border-[#86EFAC] px-3 py-2 text-[11px] text-[#15803D] font-medium">
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-5 mb-3 flex items-center gap-2 rounded-xl bg-[#F0FDF4] border border-[#86EFAC] px-3.5 py-2.5 text-[11px] text-[#15803D] font-medium"
+            >
               <CheckCircle className="h-3.5 w-3.5 shrink-0" />
               Recorded — {actionDone}
-            </div>
+            </motion.div>
           )}
 
-          {/* tab bar */}
-          <div className="flex overflow-x-auto border-t border-[#E9EDF3] dark:border-[#334155]" style={{ scrollbarWidth: 'none' }}>
-            {visibleTabs.map(t => {
-              const badge = tabBadge(t.id)
-              const active = tab === t.id
-              return (
-                <button key={t.id} onClick={() => setTab(t.id)}
-                  className={`shrink-0 px-4 py-2.5 text-[12px] font-medium whitespace-nowrap transition-colors border-b-2 ${
-                    active ? 'border-[#2F6BFF] text-[#2F6BFF]' : 'border-transparent text-[#64748B] hover:text-[#334155] dark:hover:text-slate-300'
-                  }`}>
-                  {t.label}
-                  {badge !== null && (
-                    <span className={`ml-1.5 rounded-full px-1.5 text-[9px] font-bold ${active ? 'bg-[#EAF1FE] text-[#2F6BFF]' : 'bg-[#F1F5F9] dark:bg-[#334155] text-[#94A3B8]'}`}>
-                      {badge}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+          {/* tabs */}
+          <div className="px-5 pb-0">
+            <div className="flex gap-0.5 p-1 rounded-xl bg-[#F1F5F9] dark:bg-[#0F172A] overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              {visibleTabs.map(t => {
+                const badge = tabBadge(t.id)
+                const active = tab === t.id
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTab(t.id)}
+                    className={`shrink-0 px-3 py-2 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all ${
+                      active
+                        ? 'bg-white dark:bg-[#1E293B] text-[#2F6BFF] shadow-sm'
+                        : 'text-[#64748B] hover:text-[#334155] dark:hover:text-slate-300'
+                    }`}
+                  >
+                    {t.label}
+                    {badge !== null && (
+                      <span className={`ml-1.5 rounded-full px-1.5 py-px text-[9px] font-bold ${
+                        active ? 'bg-[#EAF1FE] text-[#2F6BFF]' : 'bg-[#E2E8F0] dark:bg-[#334155] text-[#94A3B8]'
+                      }`}>
+                        {badge}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </div>
+          <div className="h-px bg-[#E9EDF3] dark:bg-[#334155] mt-3" />
         </div>
         {/* end header */}
 
         {/* ═══════════════════════════════════════════════════════ BODY */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-[#F7F8FA] dark:bg-[#0F172A]">
+          <MotionTabPanel activeKey={tab} className="min-h-full">
 
           {/* ── ENVELOPE ──────────────────────────────────────────────── */}
           {tab === 'envelope' && (
-            <div className="px-5 py-4 space-y-5">
-              {/* user message */}
-              <div className="rounded-xl bg-[#F8FAFC] dark:bg-[#1E293B] border border-[#E9EDF3] dark:border-[#334155] px-4 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8] mb-1">User Message</p>
+            <div className="px-5 py-4 space-y-4">
+              {/* user message callout */}
+              <div
+                className="rounded-xl border px-4 py-3.5"
+                style={{ backgroundColor: tint.bg, borderColor: tint.border }}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <FileText className="h-3.5 w-3.5" style={{ color: tint.text }} />
+                  <p className="text-[10px] font-bold uppercase tracking-[0.06em]" style={{ color: tint.text }}>User Message</p>
+                </div>
                 <p className="text-[13px] text-[#1E293B] dark:text-[#CBD5E1] leading-relaxed">{event.message}</p>
               </div>
 
-              {/* identifiers */}
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8] mb-2.5">Identifiers</p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3.5">
-                  <KV label="Error ID"       value={event.id}            mono />
-                  <KV label="Error Code"     value={event.errorCode}     mono href="/registry" />
-                  <div className="flex items-end gap-1 min-w-0">
-                    <KV label="Correlation ID" value={event.correlationId} mono />
-                    <button onClick={() => copy(event.correlationId, 'corr')}
-                      className="shrink-0 mb-[1px] flex h-5 w-5 items-center justify-center rounded text-[#94A3B8] hover:text-[#2F6BFF] transition-colors">
-                      {copied === 'corr' ? <CheckCircle className="h-3 w-3 text-[#16A34A]" /> : <Copy className="h-3 w-3" />}
-                    </button>
-                  </div>
-                  <div className="flex items-end gap-1 min-w-0">
-                    <KV label="Trace ID" value={event.traceId} mono />
-                    <button onClick={() => copy(event.traceId, 'trace')}
-                      className="shrink-0 mb-[1px] flex h-5 w-5 items-center justify-center rounded text-[#94A3B8] hover:text-[#2F6BFF] transition-colors">
-                      {copied === 'trace' ? <CheckCircle className="h-3 w-3 text-[#16A34A]" /> : <Copy className="h-3 w-3" />}
-                    </button>
-                  </div>
+              <SectionCard title="Identifiers" icon={Fingerprint}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                  <KV label="Error ID" value={event.id} mono />
+                  <KV label="Error Code" value={event.errorCode} mono href="/registry" />
+                  <CopyableKV label="Correlation ID" value={event.correlationId} mono onCopy={() => copy(event.correlationId, 'corr')} copied={copied} copyKey="corr" />
+                  <CopyableKV label="Trace ID" value={event.traceId} mono onCopy={() => copy(event.traceId, 'trace')} copied={copied} copyKey="trace" />
                   <KV label="Span ID" value={event.spanId} mono />
-                  <KV label="Seam"    value={event.seam} />
+                  <KV label="Seam" value={event.seam} />
                 </div>
-              </div>
+              </SectionCard>
 
-              <Divider />
-
-              {/* classification */}
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8] mb-2.5">Classification</p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3.5">
-                  <div className="flex flex-col gap-1">
+              <SectionCard title="Classification" icon={Hash}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                  <div className="flex flex-col gap-1.5">
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8]">Error Class</span>
                     <ErrorClassPill value={event.errorClass} />
                   </div>
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1.5">
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8]">Severity</span>
                     <SeverityPill value={event.severity} />
                   </div>
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1.5">
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8]">Status</span>
                     <LifecyclePill value={event.status} />
                   </div>
                   <KV label="Retryable" value={event.retryable ? 'Yes' : 'No'} />
-                  <KV label="Domain"    value={event.domain} />
-                  <KV label="TTL"       value={`${event.ttl} h`} />
+                  <KV label="Domain" value={event.domain} />
+                  <KV label="TTL" value={`${event.ttl} h`} />
                 </div>
-              </div>
+              </SectionCard>
 
-              <Divider />
-
-              {/* tenancy */}
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8] mb-2.5">Tenancy</p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3.5">
-                  <KV label="Tenant"         value={event.tenant}      href="/tenant" />
-                  <KV label="Account ID"     value={event.accountId}   mono />
-                  <KV label="Workspace ID"   value={event.workspaceId} mono />
-                  <KV label="Region"         value={event.region} />
+              <SectionCard title="Tenancy" icon={Building2}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                  <KV label="Tenant" value={event.tenant} href="/tenant" />
+                  <KV label="Account ID" value={event.accountId} mono />
+                  <KV label="Workspace ID" value={event.workspaceId} mono />
+                  <KV label="Region" value={event.region} />
                 </div>
-              </div>
+              </SectionCard>
 
-              <Divider />
-
-              {/* source & timing */}
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8] mb-2.5">Source &amp; Timing</p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3.5">
-                  <KV label="Service"     value={event.service} />
-                  <KV label="Operation"   value={event.operation} mono />
+              <SectionCard title="Source & Timing" icon={Clock}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                  <KV label="Service" value={event.service} />
+                  <KV label="Operation" value={event.operation} mono />
                   <KV label="Occurred At" value={fmt(event.occurredAt)} />
                   {event.resolvedAt && <KV label="Resolved At" value={fmt(event.resolvedAt)} />}
                   {event.assignee && (
-                    <div className="flex flex-col gap-1 col-span-2">
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8]">Assignee</span>
                       <AvatarChip initials={event.assigneeInitials!} name={event.assignee} size="md" />
                     </div>
                   )}
                 </div>
-              </div>
+              </SectionCard>
 
               {/* retry state */}
               {event.retryCount > 0 && (
-                <>
-                  <Divider />
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8] mb-2.5">Retry State</p>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-3.5">
-                      <KV label="Attempts" value={`${event.retryCount} / ${event.maxRetries}`} />
-                      {event.nextRetryAt && <KV label="Next Retry" value={fmt(event.nextRetryAt)} />}
-                    </div>
-                    <div className="mt-3 flex items-center gap-3">
-                      <div className="flex-1 h-1.5 rounded-full bg-[#F1F5F9] dark:bg-[#334155] overflow-hidden">
-                        <div className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${(event.retryCount / Math.max(event.maxRetries, 1)) * 100}%`,
-                            backgroundColor: event.retryCount >= event.maxRetries ? '#DC2626' : '#D97706',
-                          }} />
-                      </div>
-                      <span className="text-[11px] text-[#64748B] dark:text-slate-400 whitespace-nowrap">
-                        {event.retryCount}/{event.maxRetries} retries
-                      </span>
-                    </div>
+                <SectionCard title="Retry State" icon={RefreshCw}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 mb-3">
+                    <KV label="Attempts" value={`${event.retryCount} / ${event.maxRetries}`} />
+                    {event.nextRetryAt && <KV label="Next Retry" value={fmt(event.nextRetryAt)} />}
                   </div>
-                </>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-2 rounded-full bg-[#F1F5F9] dark:bg-[#334155] overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${(event.retryCount / Math.max(event.maxRetries, 1)) * 100}%`,
+                          backgroundColor: event.retryCount >= event.maxRetries ? '#DC2626' : '#D97706',
+                        }}
+                      />
+                    </div>
+                    <span className="text-[11px] font-semibold text-[#64748B] dark:text-slate-400 whitespace-nowrap tabular-nums">
+                      {event.retryCount}/{event.maxRetries}
+                    </span>
+                  </div>
+                </SectionCard>
               )}
 
               {/* ops-scoped internals */}
-              <Divider />
-              <div className="rounded-xl border border-[#E9EDF3] dark:border-[#334155] overflow-hidden">
+              <div className="rounded-xl border border-[#E9EDF3] dark:border-[#334155] bg-white dark:bg-[#1E293B] overflow-hidden shadow-sm">
                 <button onClick={() => setRevealInternals(o => !o)}
                   className="flex w-full items-center justify-between px-4 py-2.5 bg-[#F8FAFC] dark:bg-[#1E293B] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] transition-colors">
                   <div className="flex items-center gap-2">
@@ -601,7 +709,7 @@ export function ErrorDetailDrawer({ event, onClose, fullPage = false }: ErrorDet
 
           {/* ── BUSINESS DECISION ─────────────────────────────────────── */}
           {tab === 'business' && business && (
-            <div className="px-5 py-4 space-y-5">
+            <div className="px-5 py-4 space-y-4">
               {/* intent banner */}
               <div className="flex items-start gap-2.5 rounded-xl bg-[#EEF2FF] dark:bg-[#312E81]/30 border border-[#C7D2FE] dark:border-[#4F46E5]/40 px-4 py-3">
                 <Scale className="h-4 w-4 text-[#4F46E5] dark:text-[#A5B4FC] mt-0.5 shrink-0" />
@@ -712,13 +820,11 @@ export function ErrorDetailDrawer({ event, onClose, fullPage = false }: ErrorDet
           {/* ── CAUSATION CHAIN ───────────────────────────────────────── */}
           {tab === 'chain' && (
             <div className="px-5 py-4">
-              <div className="flex items-center gap-2 mb-4">
-                <GitBranch className="h-4 w-4 text-[#2F6BFF]" />
-                <p className="text-[12px] font-semibold text-[#334155] dark:text-slate-300">
+              <SectionCard title="Causation Chain" icon={GitBranch}>
+                <p className="text-[11px] text-[#64748B] dark:text-slate-400 mb-4">
                   Execution path — user action → event → error → envelope
                 </p>
-              </div>
-              <div className="relative pl-7">
+                <div className="relative pl-7">
                 {/* vertical rail */}
                 <div className="absolute left-[10px] top-2.5 bottom-2.5 w-px bg-[#E9EDF3] dark:bg-[#334155]" />
 
@@ -770,7 +876,8 @@ export function ErrorDetailDrawer({ event, onClose, fullPage = false }: ErrorDet
                     </div>
                   )
                 })}
-              </div>
+                </div>
+              </SectionCard>
             </div>
           )}
 
@@ -801,15 +908,15 @@ export function ErrorDetailDrawer({ event, onClose, fullPage = false }: ErrorDet
               )}
 
               {retryHistory.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
-                  <Minus className="h-8 w-8 text-[#E2E8F0]" />
-                  <p className="text-[12px] text-[#94A3B8]">No retry attempts recorded.</p>
-                </div>
+                <SectionCard title="Retry History" icon={RefreshCw}>
+                  <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
+                    <Minus className="h-8 w-8 text-[#E2E8F0]" />
+                    <p className="text-[12px] text-[#94A3B8]">No retry attempts recorded.</p>
+                  </div>
+                </SectionCard>
               ) : (
-                <div className="space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8]">
-                    {retryHistory.length} attempt{retryHistory.length !== 1 ? 's' : ''}
-                  </p>
+                <SectionCard title={`Retry History (${retryHistory.length})`} icon={RefreshCw}>
+                  <div className="space-y-2">
                   {retryHistory.map(r => (
                     <div key={r.attempt}
                       className={`flex items-start gap-3 rounded-xl border px-3.5 py-2.5 ${
@@ -830,7 +937,8 @@ export function ErrorDetailDrawer({ event, onClose, fullPage = false }: ErrorDet
                       </div>
                     </div>
                   ))}
-                </div>
+                  </div>
+                </SectionCard>
               )}
             </div>
           )}
@@ -839,15 +947,18 @@ export function ErrorDetailDrawer({ event, onClose, fullPage = false }: ErrorDet
           {tab === 'saga' && (
             <div className="px-5 py-4">
               {sagaSteps.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
-                  <Minus className="h-8 w-8 text-[#E2E8F0]" />
-                  <p className="text-[12px] text-[#94A3B8]">No saga / compensation data for this error class or domain.</p>
-                </div>
+                <SectionCard title="Saga Compensation" icon={Undo2}>
+                  <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
+                    <Minus className="h-8 w-8 text-[#E2E8F0]" />
+                    <p className="text-[12px] text-[#94A3B8]">No saga / compensation data for this error class or domain.</p>
+                  </div>
+                </SectionCard>
               ) : (
-                <div className="space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8] mb-3">
-                    Compensating steps — reverse execution order
+                <SectionCard title="Compensating Steps" icon={Undo2}>
+                  <p className="text-[11px] text-[#64748B] dark:text-slate-400 mb-3">
+                    Reverse execution order
                   </p>
+                  <div className="space-y-2">
                   {sagaSteps.map((s) => {
                     const sc = s.outcome === 'success' ? { bg: '#F0FDF4', border: '#86EFAC', text: '#15803D', dot: '#16A34A' }
                       : s.outcome === 'failed'  ? { bg: '#FEF2F2', border: '#FECACA', text: '#B91C1C', dot: '#DC2626' }
@@ -876,7 +987,8 @@ export function ErrorDetailDrawer({ event, onClose, fullPage = false }: ErrorDet
                       </div>
                     )
                   })}
-                </div>
+                  </div>
+                </SectionCard>
               )}
             </div>
           )}
@@ -884,22 +996,27 @@ export function ErrorDetailDrawer({ event, onClose, fullPage = false }: ErrorDet
           {/* ── RELATED LOGS ──────────────────────────────────────────── */}
           {tab === 'logs' && (
             <div className="px-5 py-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8]">
-                  Lines sharing <span className="font-mono">{event.correlationId}</span>
-                </p>
-                <Link href="/logs"
-                  className="flex items-center gap-1 text-[11px] font-medium text-[#2F6BFF] hover:underline">
-                  Open in Log Viewer <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
+              <SectionCard
+                title="Related Logs"
+                icon={ScrollText}
+                className="overflow-hidden"
+              >
+                <div className="flex items-center justify-between mb-3 -mt-1">
+                  <p className="text-[11px] text-[#64748B] dark:text-slate-400">
+                    Correlation <span className="font-mono text-[#2F6BFF]">{event.correlationId}</span>
+                  </p>
+                  <Link href="/logs"
+                    className="flex items-center gap-1 text-[11px] font-medium text-[#2F6BFF] hover:underline">
+                    Open in Log Viewer <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
               {relatedLogs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
+                <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
                   <ScrollText className="h-8 w-8 text-[#E2E8F0]" />
                   <p className="text-[12px] text-[#94A3B8]">No log lines found for this correlation ID in the current dataset.</p>
                 </div>
               ) : (
-                <div className="rounded-xl bg-[#0F172A] overflow-hidden border border-[#1E3A5F]">
+                <div className="rounded-xl bg-[#0F172A] overflow-hidden border border-[#1E3A5F] -mx-1">
                   {relatedLogs.map((log, i) => {
                     const lc = log.level === 'FATAL' ? '#F87171'
                       : log.level === 'ERROR' ? '#FCA5A5'
@@ -918,15 +1035,15 @@ export function ErrorDetailDrawer({ event, onClose, fullPage = false }: ErrorDet
                   })}
                 </div>
               )}
+              </SectionCard>
             </div>
           )}
 
           {/* ── AUDIT TRAIL ───────────────────────────────────────────── */}
           {tab === 'audit' && (
-            <div className="px-5 py-4 space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94A3B8] mb-3">
-                All views &amp; actions on this envelope
-              </p>
+            <div className="px-5 py-4">
+              <SectionCard title={`Audit Trail (${auditTrail.length})`} icon={User}>
+                <div className="space-y-2">
               {auditTrail.map((entry, i) => (
                 <div key={i} className="flex items-start gap-3 rounded-xl border border-[#E9EDF3] dark:border-[#334155] px-3.5 py-2.5 bg-white dark:bg-[#1E293B]">
                   <div className="shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-[#EAF1FE] dark:bg-[#1E3A5F]">
@@ -955,13 +1072,16 @@ export function ErrorDetailDrawer({ event, onClose, fullPage = false }: ErrorDet
                   </div>
                 </div>
               ))}
+                </div>
+              </SectionCard>
             </div>
           )}
 
+          </MotionTabPanel>
         </div>
         {/* end body */}
 
-      </div>
+      </motion.div>
       {/* end wrapper */}
 
       {/* confirm modal */}

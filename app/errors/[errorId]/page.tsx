@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { AppShell } from '@/components/shell/app-shell'
+import { MotionSection } from '@/components/voltus/motion'
 import { ErrorDetailDrawer } from '@/components/voltus/error-detail-drawer'
 import { errors } from '@/mock'
 
@@ -23,7 +24,7 @@ export default function ErrorDetailPage({ params }: Props) {
       { label: 'Error Log', href: '/errors' },
       { label: event.errorCode },
     ]}>
-      <div className="flex flex-col h-full min-h-0">
+      <MotionSection className="flex flex-col h-full min-h-0">
         {/* back bar */}
         <div className="shrink-0 flex items-center gap-3 px-6 py-3 border-b border-[#E9EDF3] dark:border-[#334155] bg-[#F8FAFC] dark:bg-[#0F172A]">
           <Link href="/errors"
@@ -43,7 +44,7 @@ export default function ErrorDetailPage({ params }: Props) {
             fullPage
           />
         </div>
-      </div>
+      </MotionSection>
     </AppShell>
   )
 }
